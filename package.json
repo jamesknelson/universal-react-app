@@ -23,6 +23,7 @@
     "eslint-plugin-import": "2.14.0",
     "eslint-plugin-jsx-a11y": "6.1.2",
     "eslint-plugin-react": "7.12.4",
+    "express": "^4.16.4",
     "file-loader": "2.0.0",
     "fs-extra": "7.0.1",
     "html-webpack-plugin": "4.0.0-alpha.2",
@@ -32,6 +33,7 @@
     "jest-resolve": "23.6.0",
     "jest-watch-typeahead": "^0.2.1",
     "mini-css-extract-plugin": "0.5.0",
+    "null-loader": "^0.1.1",
     "optimize-css-assets-webpack-plugin": "5.0.1",
     "pnp-webpack-plugin": "1.2.1",
     "postcss-flexbugs-fixes": "4.1.0",
@@ -44,17 +46,21 @@
     "react-dom": "^16.8.6",
     "resolve": "1.10.0",
     "sass-loader": "7.1.0",
+    "source-map-support": "^0.5.11",
     "style-loader": "0.23.1",
     "terser-webpack-plugin": "1.2.2",
+    "tmp": "^0.1.0",
     "url-loader": "1.1.2",
     "webpack": "4.28.3",
     "webpack-dev-server": "3.1.14",
     "webpack-manifest-plugin": "2.0.4",
+    "webpack-node-externals": "^1.7.2",
     "workbox-webpack-plugin": "3.6.3"
   },
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
+    "serve": "node scripts/serve.js",
     "test": "node scripts/test.js"
   },
   "eslintConfig": {
@@ -107,8 +113,8 @@
       "node"
     ],
     "watchPlugins": [
-      "/Users/james/seven-stripes/git/universal-react-app/node_modules/jest-watch-typeahead/filename.js",
-      "/Users/james/seven-stripes/git/universal-react-app/node_modules/jest-watch-typeahead/testname.js"
+      "jest-watch-typeahead/filename.js",
+      "jest-watch-typeahead/testname.js"
     ]
   },
   "babel": {

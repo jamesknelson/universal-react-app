@@ -1,4 +1,17 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# universal-react-app
+
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), and has been modified to be handle server rendering.
+
+The following changes have been made from a standard Create React App project:
+
+- An `index.node.js` file has been added, which will be bundled to the `build/node` directory. It exports a standard Node HTTP middleware that can be used to render the app within an Express app, or within a serverless function.
+- A `%RENDERED_CONTENT%` placeholder has been added to `index.html`, which is replaced with the rendered content by the NNode renderer.
+- A middleware has been added to the dev server that uses `index.node.js` to render your app during development.
+- Support for both `.web.js` and `.node.js` extensions, which will be used in their respective environments.
+- The original value of the `process.env` object has been made usable, allowing the Node bundle to access environment variables.
+- The React app has been updated to use `ReactDOM.hydrate()` instead of `ReactDOM.render()`.
+- A `serve` script has been added, which can be called with `npm run serve`, and will serve the contents of `build`. It includes an express-based server to load the exported middleware.
+- All SSR-related features can be disabled by removing index.node.js.
 
 ## Available Scripts
 
@@ -27,15 +40,10 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### `npm run eject`
+### `npm run server`
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+Launches a server for the content in the `build` folder.<br>
+It loads the Node bundle to handle server rendering when available.
 
 ## Learn More
 

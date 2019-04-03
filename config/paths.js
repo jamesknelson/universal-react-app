@@ -38,46 +38,42 @@ function getServedPath(appPackageJson) {
   return ensureSlash(servedUrl, true);
 }
 
-const moduleFileExtensions = [
-  'web.mjs',
-  'mjs',
-  'web.js',
-  'js',
-  'web.ts',
-  'ts',
-  'web.tsx',
-  'tsx',
-  'json',
-  'web.jsx',
-  'jsx',
-];
+const moduleFileExtensions = ['mjs', 'js', 'ts', 'tsx', 'json', 'jsx'];
+const webModuleFileExtensions = moduleFileExtensions.concat(moduleFileExtensions.map(ext => 'web.'+ext));
+const nodeModuleFileExtensions = moduleFileExtensions.concat(moduleFileExtensions.map(ext => 'node.'+ext));
 
 // Resolve file paths in the same order as webpack
-const resolveModule = (resolveFn, filePath) => {
-  const extension = moduleFileExtensions.find(extension =>
+const resolveModule = (resolveFn, extensions, filePath, defaultExtension='js') => {
+  let extension = extensions.find(extension =>
     fs.existsSync(resolveFn(`${filePath}.${extension}`))
   );
-
+  if (!extension && defaultExtension) {
+    extension = defaultExtension
+  }
   if (extension) {
     return resolveFn(`${filePath}.${extension}`);
   }
-
-  return resolveFn(`${filePath}.js`);
 };
+
+const webIndexJs = resolveModule(resolveApp, webModuleFileExtensions, 'src/index');
+const nodeIndexJs = resolveModule(resolveApp, nodeModuleFileExtensions, 'src/index', null);
+const useNodeEnv = !!nodeIndexJs;
 
 // config after eject: we're in ./config/
 module.exports = {
   dotenv: resolveApp('.env'),
   appPath: resolveApp('.'),
-  appBuild: resolveApp('build'),
-  appPublic: resolveApp('public'),
+  appNodeBuild: useNodeEnv && resolveApp('build/node'),
+  appWebBuild: useNodeEnv ? resolveApp('build/web') : resolveApp('build'),
   appHtml: resolveApp('public/index.html'),
-  appIndexJs: resolveModule(resolveApp, 'src/index'),
+  appPublic: resolveApp('public'),
+  appWebIndexJs: webIndexJs,
+  appNodeIndexJs: nodeIndexJs !== webIndexJs ? nodeIndexJs : undefined,
   appPackageJson: resolveApp('package.json'),
   appSrc: resolveApp('src'),
   appTsConfig: resolveApp('tsconfig.json'),
   yarnLockFile: resolveApp('yarn.lock'),
-  testsSetup: resolveModule(resolveApp, 'src/setupTests'),
+  testsSetup: resolveModule(resolveApp, nodeModuleFileExtensions, 'src/setupTests'),
   proxySetup: resolveApp('src/setupProxy.js'),
   appNodeModules: resolveApp('node_modules'),
   publicUrl: getPublicUrl(resolveApp('package.json')),
@@ -86,4 +82,5 @@ module.exports = {
 
 
 
-module.exports.moduleFileExtensions = moduleFileExtensions;
+module.exports.nodeModuleFileExtensions = nodeModuleFileExtensions;
+module.exports.webModuleFileExtensions = webModuleFileExtensions;

@@ -40,7 +40,7 @@ const WARN_AFTER_CHUNK_GZIP_SIZE = 1024 * 1024;
 const isInteractive = process.stdout.isTTY;
 
 // Warn and crash if required files are missing
-if (!checkRequiredFiles([paths.appHtml, paths.appIndexJs])) {
+if (!checkRequiredFiles([paths.appHtml, paths.appWebIndexJs])) {
   process.exit(1);
 }
 
@@ -49,7 +49,8 @@ const argv = process.argv.slice(2);
 const writeStatsJson = argv.indexOf('--stats') !== -1;
 
 // Generate configuration
-const config = configFactory('production');
+const webConfig = configFactory('production', 'web');
+const nodeConfig = configFactory('production', 'node');
 
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
@@ -58,12 +59,15 @@ checkBrowsers(paths.appPath, isInteractive)
   .then(() => {
     // First, read the current file sizes in build directory.
     // This lets us display how much they changed later.
-    return measureFileSizesBeforeBuild(paths.appBuild);
+    return measureFileSizesBeforeBuild(paths.appWebBuild);
   })
   .then(previousFileSizes => {
     // Remove all content but keep the directory so that
     // if you're in it, you don't end up in Trash
-    fs.emptyDirSync(paths.appBuild);
+    fs.emptyDirSync(paths.appWebBuild);
+    if (paths.appNodeBuild) {
+      fs.emptyDirSync(paths.appNodeBuild);
+    }
     // Merge with the public folder
     copyPublicFolder();
     // Start the webpack build
@@ -71,6 +75,8 @@ checkBrowsers(paths.appPath, isInteractive)
   })
   .then(
     ({ stats, previousFileSizes, warnings }) => {
+      const webBuildFolder = path.relative(process.cwd(), paths.appWebBuild);
+      
       if (warnings.length) {
         console.log(chalk.yellow('Compiled with warnings.\n'));
         console.log(warnings.join('\n\n'));
@@ -90,9 +96,9 @@ checkBrowsers(paths.appPath, isInteractive)
 
       console.log('File sizes after gzip:\n');
       printFileSizesAfterBuild(
-        stats,
+        stats.stats[0],
         previousFileSizes,
-        paths.appBuild,
+        paths.appWebBuild,
         WARN_AFTER_BUNDLE_GZIP_SIZE,
         WARN_AFTER_CHUNK_GZIP_SIZE
       );
@@ -100,13 +106,12 @@ checkBrowsers(paths.appPath, isInteractive)
 
       const appPackage = require(paths.appPackageJson);
       const publicUrl = paths.publicUrl;
-      const publicPath = config.output.publicPath;
-      const buildFolder = path.relative(process.cwd(), paths.appBuild);
+      const publicPath = webConfig.output.publicPath;
       printHostingInstructions(
         appPackage,
         publicUrl,
         publicPath,
-        buildFolder,
+        webBuildFolder,
         useYarn
       );
     },
@@ -127,7 +132,9 @@ checkBrowsers(paths.appPath, isInteractive)
 function build(previousFileSizes) {
   console.log('Creating an optimized production build...');
 
-  let compiler = webpack(config);
+  const compiler = webpack([webConfig].concat(
+    paths.appNodeIndexJs ? [nodeConfig] : [],
+  ));
   return new Promise((resolve, reject) => {
     compiler.run((err, stats) => {
       let messages;
@@ -174,7 +181,7 @@ function build(previousFileSizes) {
       };
       if (writeStatsJson) {
         return bfj
-          .write(paths.appBuild + '/bundle-stats.json', stats.toJson())
+          .write(paths.appWebBuild + '/bundle-stats.json', stats.toJson())
           .then(() => resolve(resolveArgs))
           .catch(error => reject(new Error(error)));
       }
@@ -185,8 +192,7 @@ function build(previousFileSizes) {
 }
 
 function copyPublicFolder() {
-  fs.copySync(paths.appPublic, paths.appBuild, {
+  fs.copySync(paths.appPublic, paths.appWebBuild, {
     dereference: true,
-    filter: file => file !== paths.appHtml,
   });
 }
